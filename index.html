@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Companion — Tableau Extension</title>
+
+  <!-- Tableau Extensions API (vendored locally so the extension can't fail to load) -->
+  <script src="./lib/tableau.extensions.1.latest.js"></script>
+
+  <link rel="stylesheet" href="./src/style.css" />
+</head>
+<body>
+  <main class="panel">
+    <header class="panel__head">
+      <h1 class="panel__title">Dashboard Companion</h1>
+      <span id="status" class="pill pill--wait">connecting…</span>
+    </header>
+
+    <!-- BASELINE: this all works out of the box -->
+    <section class="block">
+      <p class="label">Dashboard</p>
+      <p id="dashboardName" class="value">—</p>
+    </section>
+
+    <section class="block">
+      <p class="label">Worksheets</p>
+      <ul id="worksheets" class="ws-list"></ul>
+    </section>
+
+    <section class="block">
+      <p class="label">Selected marks</p>
+      <p id="markCount" class="value value--big">0</p>
+      <p class="hint">Click marks in the dashboard — this updates live.</p>
+    </section>
+
+    <button id="resetBtn" class="btn">Reset all filters</button>
+
+    <!-- ───────────────────────────────────────────────────────────── -->
+    <!--  👇 WORKSHOP ZONE — build your custom feature here with Claude  -->
+    <!--  The element below is your canvas. See CLAUDE.md for prompts.   -->
+    <section id="workshop" class="workshop workshop--ayd">
+      <p class="workshop__tag">Ask your dashboard</p>
+
+      <!-- Anthropic API key (stored in this browser only) -->
+      <input id="aydKey" type="password" class="ayd-input" autocomplete="off"
+             placeholder="Anthropic API key (sk-ant-…)" />
+
+      <!-- Ask box -->
+      <div class="ayd-ask">
+        <input id="aydQuestion" type="text" class="ayd-input"
+               placeholder="e.g. only the West region, or which region is best?" />
+        <button id="aydSend" type="button" class="btn ayd-send">Ask</button>
+      </div>
+
+      <!-- Privacy note -->
+      <p class="ayd-privacy">
+        🔒 No dashboard data ever leaves Tableau. The dropdown filters run
+        entirely in your browser. When you <strong>Ask</strong>, only the field
+        <em>names</em> and your question are sent to Claude to choose filters —
+        never your data's values or rows.
+      </p>
+
+      <!-- Status line + answer -->
+      <p id="aydStatus" class="ayd-status"></p>
+      <div id="aydAnswer" class="ayd-answer" hidden></div>
+
+      <!-- Manual filter controls (Phase 1) -->
+      <div id="aydFields" class="ayd-fields"></div>
+    </section>
+    <!-- ───────────────────────────────────────────────────────────── -->
+  </main>
+
+  <!-- Local, gitignored API key (optional). Loads before the app so it can pre-fill the key. -->
+  <script src="./src/config.local.js"></script>
+  <script src="./src/extension.js"></script>
+</body>
+</html>

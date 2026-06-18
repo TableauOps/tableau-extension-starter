@@ -1,0 +1,13 @@
+.DS_Store
+node_modules/
+*.log
+.vscode/
+
+# OS / sync junk (Windows, Synology Drive)
+Thumbs.db
+@eaDir/
+
+# Local secrets — your Anthropic API key. Never commit this.
+# (matched at the src path and anywhere else, just in case)
+src/config.local.js
+**/config.local.js

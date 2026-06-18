@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
+  <dashboard-extension id="com.tableauops.dashboard.companion" extension-version="1.0.0">
+    <default-locale>en_US</default-locale>
+    <name resource-id="name"/>
+    <description>A starter Tableau dashboard extension to customize live.</description>
+    <author name="Your Name" email="you@example.com" organization="TableauOps" website="https://github.com/tableauops"/>
+    <min-api-version>1.4</min-api-version>
+    <source-location>
+      <!-- HOSTED on GitHub Pages under the tableauops account.
+           If your repo is named something other than tableau-extension-starter,
+           change that segment of the URL below to match. -->
+      <url>https://tableauops.github.io/tableau-extension-starter/index.html</url>
+    </source-location>
+    <icon>iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABiUlEQVR42u2bvZGDMBBG6YIWSEkJmblIdZBcAQpJSamDUDVQh1NaUMbtzYgZD4eNdJZlsfsFL/HYmH3oD2m3WL+/CskUEJD2DytCER2hid6h3WfKfYeNgJYYiJmwxOqJdb8Z3DUuJaAmRmIJCPiMxV2zzlnA75MyEYN+hInZKmL16ylB4HumGOPFq8HrDwS+R39CQJmouYd0izKVgIa4ZRT8xs3d21sFqMDpLDXW3eNbBKiMA9+jYgtoMn/yRy2hiSWgzLTP+4wJZQwB5oLB388OLwnQFw7ea51wtsJbmVD9R8DESMAUKqBlFPxGGyLAMBRgfAXUDIPfqH0EjIwFjD4CFsYCljMBLePgDwfDvYBBgIDhmYBZgID5mQArQIB9JKASEPyfpfFVNzyibZjcC+gECeiOBGhBAvSRgF6QgB4C0AUwCGIaxEIIS2G8DOF1GBsi2BLDpii2xXEwgqMxHI7ieBwJEkiRQZIU0uSQKIlUWSRLI10eBRMomUHRFMrmUDiJ0lkUT8vhBwtzhqA+3cdsAAAAAElFTkSuQmCC</icon>
+  </dashboard-extension>
+  <resources>
+    <resource id="name">
+      <text locale="en_US">Dashboard Companion</text>
+    </resource>
+  </resources>
+</manifest>

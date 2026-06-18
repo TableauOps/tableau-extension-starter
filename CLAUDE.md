@@ -1,215 +1,81 @@
-# Build plan — "Ask Your Dashboard"
+# Build a Tableau Viz Extension with Claude Code
 
-Turn the Dashboard Companion baseline into **Ask Your Dashboard**: a panel where
-you type a question in plain English ("show me only the West region", "sales
-between 0 and 500") and the dashboard filters itself — powered by Claude.
+This is a **viz extension** starter — a custom Tableau chart *type* that renders
+inside a worksheet. It already connects, reads the data, and draws a placeholder.
+Your job is to replace the placeholder with a real chart. Open this folder in
+Claude Code (`claude` in the project root) and work the steps below.
 
-You'll use **Claude Code** to build an extension that **calls Claude**. That loop
-is the whole demo. Open this project in Claude Code (`claude` in the project root)
-and work the phases below in order.
-
-## The arc (each phase is a working checkpoint)
-
-| Phase | You'll have | Risk |
-|---|---|---|
-| 0 · Baseline | Connects, reads the dashboard (already in the repo) | none |
-| 1 · Field map + manual filter | A real, useful filter panel — no AI yet | low |
-| 2 · Natural language → filters | **The banger:** type a question, it filters | medium |
-| 3 · Ask questions of the data | Claude answers, not just filters | stretch |
-
-If you run short on time, stop after Phase 1 (complete extension) or Phase 2
-(the wow). Phase 3 is gravy.
-
-## Before you start (Phase 2+ only)
-
-You need an **Anthropic API key** for the Claude calls. Get one at
-console.anthropic.com. For the live build you'll paste it into the code or a
-field in the panel. **This is fine for the demo with your own key**, but the key
-is visible in the browser — for a version you hand out, proxy the call through a
-small backend instead of calling the API directly. Say that out loud during the
-workshop; it's a good teaching moment.
-
----
+> Requires **Tableau 2024.2+**. Everything runs locally in the worksheet — no
+> servers to call, no API keys.
 
 ## Orient Claude (paste once)
 
-> This is a Tableau Dashboard Extension. `src/extension.js` initializes the
-> Extensions API and has baseline features plus a "WORKSHOP ZONE" comment.
-> `index.html` has `<section id="workshop">` as the render target. We're building
-> "Ask Your Dashboard" in phases. Add UI into `#workshop` and logic in the
-> workshop zone of extension.js. Don't touch `lib/`. Explain each change briefly
-> as you go.
+> This is a Tableau **Viz Extension** (`<worksheet-extension>`). `src/viz.js`
+> initializes the Extensions API, reads the encodings + summary data, and has a
+> clearly marked **BUILD ZONE** with a `render(model)` function. `index.html`
+> has `<div id="viz">` as the render target. Encodings are declared in
+> `manifest.trex`. Replace `render(model)` to draw a chart from `model`; don't
+> touch `lib/`. Explain each change briefly as you go.
 
----
+## The pattern (what's already wired)
 
-## Phase 1 — Field map + manual filter
+Every viz extension is the same four moves — only the last one changes:
 
-Goal: discover the dashboard's filterable fields and their values, show them, and
-let the user apply a filter by hand. This proves the apply pipeline works before
-any AI is involved.
+1. **Connect** — `tableau.extensions.initializeAsync()`, then
+   `worksheetContent.worksheet`.
+2. **Encodings** — `getVisualSpecificationAsync()` tells you which field the user
+   dropped on each tile (`dimension`, `measure`).
+3. **Data** — `getSummaryDataReaderAsync()` → read pages → columns + rows.
+4. **Draw** — render into `#viz`; re-render on `SummaryDataChanged`.
 
-**Prompt:**
-
-> In the build zone, write a `discoverFields()` function: loop every worksheet,
-> call `getFiltersAsync()`, and for each categorical filter call
-> `getDomainAsync(tableau.FilterDomainType.Relevant)` to get its values, and for
-> each range filter get its min/max. Dedupe by field name and return an array like
-> `[{field, type, values}]`. Then render one dropdown per categorical field into
-> `#workshop`; on change, apply that value with `applyFilterAsync(field, [value],
-> tableau.FilterUpdateType.Replace)` on the worksheets that have it.
-
-**Key code it should land on:**
+Steps 1–3 are done. You live in step 4 (the BUILD ZONE), where `render(model)`
+receives:
 
 ```js
-async function discoverFields() {
-  const dashboard = tableau.extensions.dashboardContent.dashboard;
-  const map = new Map();
-  for (const ws of dashboard.worksheets) {
-    for (const f of await ws.getFiltersAsync()) {
-      if (map.has(f.fieldName)) continue;
-      if (f.filterType === "categorical") {
-        const d = await f.getDomainAsync(tableau.FilterDomainType.Relevant);
-        map.set(f.fieldName, { field: f.fieldName, type: "categorical",
-          values: d.values.map(v => v.formattedValue) });
-      } else if (f.filterType === "range") {
-        const d = await f.getDomainAsync(tableau.FilterDomainType.Relevant);
-        map.set(f.fieldName, { field: f.fieldName, type: "range",
-          min: d.min.value, max: d.max.value });
-      }
-    }
-  }
-  return [...map.values()];
-}
+model.worksheet  // sheet name
+model.fields     // { dimension: "Region", measure: "Sales", … }
+model.columns    // [{ name, isNumeric }]
+model.rows       // [["West", "$1,234"], …]  (formatted strings)
 ```
 
-**Checkpoint:** pick a value from a dropdown → the viz filters. You now have a
-real extension.
+## Changing the inputs
 
----
+Want different tiles? Edit the `<encoding>` entries in **both** manifests, then
+read the new ids in `getEncodedFields`. For example, a heatmap might want
+`row`, `column`, and `value`; a bar chart wants `category` and `measure`.
 
-## Phase 2 — Natural language → filters (the banger)
+## Starter prompts (pick a chart, then climb)
 
-Goal: a text box. The user types a question; you send Claude the field map + the
-question; Claude returns JSON describing which filters to apply; you validate it
-against the real fields and apply them.
+> Replace `render(model)` so it draws an **SVG bar chart**: one bar per row, the
+> `dimension` field for labels, the `measure` field for bar length. Scale bars to
+> the max value, label each bar, and animate them growing in on each data change.
 
-**Prompt:**
+> Replace `render(model)` with a clean, sticky-header **HTML table** of
+> `model.columns` / `model.rows`: tabular-figure numbers, zebra rows, and a row
+> count. Right-align numeric columns (`column.isNumeric`).
 
-> Add a text input ("Ask your dashboard…") and a Send button to `#workshop`. On
-> send, call `askClaude(question, fields)` which POSTs to the Anthropic API with
-> the field map as context and returns parsed JSON. If the JSON action is
-> "filter", apply each filter via `applyFilterAsync` / `applyRangeFilterAsync`,
-> ignoring any field not in the real field map. Show a one-line summary of what
-> was applied. Read the API key from a password input in the panel.
+Then add features one at a time — each is a self-contained checkpoint:
 
-**The Claude call (client-side):**
+- **Sort** — click a header to sort rows; show a caret for the state.
+- **Color** — add a third encoding and use it to color marks.
+- **Tooltips** — rich hover cards (you own the DOM, so make them nice).
+- **Number formatting, totals, export** — for tables.
 
-```js
-async function askClaude(question, fields) {
-  const system =
-    "You translate a user's plain-English request into Tableau filter actions. " +
-    "Only use fields from this schema: " + JSON.stringify(fields) + ". " +
-    "Respond with ONLY JSON, no prose, in this shape: " +
-    '{"action":"filter","filters":[' +
-    '{"field":"Region","type":"categorical","values":["West"]},' +
-    '{"field":"Sales","type":"range","min":0,"max":500}]}' +
-    ' or {"action":"answer","text":"..."} if it is a question, not a filter.';
+## Workflow tips
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": API_KEY,                              // from the panel input
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true"
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",     // or "claude-haiku-4-5-20251001" for speed
-      max_tokens: 1024,
-      system,
-      messages: [{ role: "user", content: question }]
-    })
-  });
-  const data = await res.json();
-  const text = data.content.map(b => b.text || "").join("");
-  return JSON.parse(text);
-}
-```
-
-**Applying the result (validate against real fields):**
-
-```js
-async function applyIntent(intent, fields) {
-  const valid = new Set(fields.map(f => f.field));
-  const dashboard = tableau.extensions.dashboardContent.dashboard;
-  for (const flt of intent.filters || []) {
-    if (!valid.has(flt.field)) continue;               // never trust blindly
-    for (const ws of dashboard.worksheets) {
-      const has = (await ws.getFiltersAsync()).some(f => f.fieldName === flt.field);
-      if (!has) continue;
-      if (flt.type === "categorical") {
-        await ws.applyFilterAsync(flt.field, flt.values,
-          tableau.FilterUpdateType.Replace);
-      } else {
-        await ws.applyRangeFilterAsync(flt.field,
-          { min: flt.min, max: flt.max }, tableau.FilterUpdateType.Replace);
-      }
-    }
-  }
-}
-```
-
-**Checkpoint:** type "only the West region" → the dashboard filters to West. 🎤
-
----
-
-## Phase 3 — Ask questions of the data (stretch)
-
-Goal: when the user asks something that isn't a filter ("which region is
-strongest?"), show Claude's answer instead.
-
-**Prompt:**
-
-> When `askClaude` returns `{"action":"answer","text":...}`, render that text in
-> `#workshop` as the response. For richer answers, optionally pull a small summary
-> with `worksheet.getSummaryDataAsync({ maxRows: 200 })`, send the rows along with
-> the question, and let Claude reason over them. Keep maxRows small.
-
----
-
-## Live demo script (what to type)
-
-1. "show me only the West region"  → categorical filter
-2. "sales between 0 and 500"        → range filter
-3. "West region and sales over 1000" → two filters at once
-4. (Phase 3) "which region is doing best?" → an answer
-5. Click your baseline **Reset all filters** to clear and reset the room
-
-## Model choice
-
-- `claude-sonnet-4-6` — reliable default for intent parsing.
-- `claude-haiku-4-5-20251001` — faster/cheaper, great for snappy live filtering.
+- **Reload after every change:** mark-type dropdown → the extension's menu →
+  **Reload**. Edits won't show until you do.
+- Build a tiny test sheet first (Superstore: a dimension + a measure) so there's
+  data to read.
+- Paste any browser console error straight back to Claude.
+- Keep `min-api-version` and the 2024.2+ requirement in mind — older Tableau
+  won't load the manifest at all.
 
 ## Troubleshooting
 
 | Symptom | Fix |
 |---|---|
-| `JSON.parse` fails | Tighten the system prompt: "Respond with ONLY JSON." Log the raw `text`. |
-| Filter doesn't apply | The field isn't a filter on that worksheet — drop a Region/Category filter onto the dashboard first. |
-| 401 from the API | API key missing or wrong in the panel input. |
-| CORS error | Confirm the `anthropic-dangerous-direct-browser-access: true` header is set. |
-| Model invents a field | The validation `Set` already drops unknown fields — confirm you're filtering on it. |
-
-## Workflow tips
-
-- Reload the extension in Tableau after each change (right-click → Reload).
-- Build a tiny test dashboard first: one viz + a Region (categorical) and a Sales
-  (range) filter, so Phase 1 has something to discover.
-- Paste any browser console error straight back to Claude.
-
----
-
-### Prefer a simpler build?
-The earlier options (CSV export of selected marks, persistent notes, quick-filter
-buttons) still work as drop-in alternatives — but "Ask Your Dashboard" is the one
-that lands the Claude angle. Pick based on your comfort and the room.
+| Manifest greyed out | Tableau < 2024.2, or extensions disabled. |
+| Blank viz area | No fields on the encoding tiles — drop a dimension + measure. |
+| Edits not showing | Reload the extension from the mark-type dropdown. |
+| `Could not initialize` | Server not running, or `<url>` ≠ serve address. |

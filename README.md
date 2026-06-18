@@ -1,122 +1,113 @@
-# Dashboard Companion — Tableau Extension Starter
+# Tableau Viz Extension — Starter
 
-A **working** Tableau Dashboard Extension you can load in under five minutes, then
-customize live with Claude Code. It ships connected and functional so a workshop
-build never starts from a blank folder.
+A **working, minimal** Tableau *Viz Extension* — a custom chart **type** that
+renders inside a worksheet — that you customize live (great with Claude Code). It
+ships connected and functional so a build never starts from a blank folder.
 
 Out of the box it:
-- connects to the dashboard via the Extensions API,
-- shows the dashboard name and all worksheets,
-- displays a **live count of selected marks**, and
-- includes a working **Reset all filters** button.
+- connects to the worksheet via the Viz Extensions API,
+- reads whatever fields you drop on its **Dimension** / **Measure** tiles,
+- reads the worksheet's summary data, and
+- renders a neutral placeholder card with a live preview of the data.
 
-The dashed **build zone** in the panel is where you'll add a new feature.
+The **BUILD ZONE** in [`src/viz.js`](src/viz.js) is the one function you replace
+to draw your own chart.
 
----
-
-## What you need
-
-- **Tableau Desktop** (2018.2+) or Tableau Server/Cloud with extensions enabled.
-- A way to serve the folder locally — either **Python 3** or **Node**. You almost
-  certainly already have one.
-
-> Extensions must be served over `http://localhost` (dev) or `https://` (hosted).
-> Opening `index.html` as a `file://` path will **not** work.
+> **Requires Tableau 2024.2+** (Desktop or Cloud/Server). Viz Extensions did not
+> exist before 2024.2 — the manifest won't load on older versions.
 
 ---
 
-## Quick start (local, ~5 min)
+## Quick start (local, ~3 min)
 
-1. **Unzip** this folder somewhere stable.
+Tableau loads an extension from a URL, so you serve the folder, then point a
+worksheet's Marks card at the manifest.
 
-2. **Serve it.** From the project root, run one of:
+1. **Serve this folder on port 1234.** From the project root:
 
    ```bash
-   python3 -m http.server 8000
+   python -m http.server 1234
+   # or
+   npx http-server -p 1234 -c-1
    ```
-   ```bash
-   npx serve -l 8000
-   ```
 
-   Leave that running. The extension is now at `http://localhost:8000/index.html`.
+   The extension is now at `http://localhost:1234/index.html` — the URL in
+   `manifest.trex`.
 
-3. **Load it in Tableau.** Open a workbook with a dashboard (or build a quick one),
-   then from the Objects pane drag **Extension** onto the dashboard.
-   Choose **Access Local Extensions**, and select **`manifest.trex`** from this folder.
+2. **Open a worksheet** (Superstore is perfect). Build any sheet so the **Marks
+   card** is in play.
 
-4. The **Dashboard Companion** panel appears. Click some marks — the count updates.
-   Click **Reset all filters** to confirm it's live.
+3. **Add the extension.** On the **Marks card**, open the mark-type dropdown
+   (the one that says *Automatic / Bar / Line…*) → **Add Extension** →
+   **Access Local Extensions** → choose `manifest.trex` from this folder.
 
-If the panel shows `init failed`, your local server isn't running or the `<url>` in
-`manifest.trex` doesn't match the address you're serving from.
+4. **Drop fields.** Two tiles appear on the Marks card — **Dimension** and
+   **Measure**. Drag a dimension onto one and a measure onto the other. The
+   placeholder card fills with your data.
+
+> **Reload after each code change:** open the mark-type dropdown again → the
+> extension's menu → **Reload** (or remove and re-add the extension).
 
 ---
 
-## Hosting it on GitHub Pages (tableauops)
+## Hosting on GitHub Pages
 
 Local works only on your machine. To use the extension in a shared or published
-workbook, host the files over HTTPS. This repo is pre-wired for the **`tableauops`**
-GitHub account via `manifest.hosted.trex`.
+workbook, host the files over HTTPS.
 
-1. Create an empty repo named **`tableau-extension-starter`** under `tableauops`,
-   then push this folder to it:
+1. Push this folder to a GitHub repo, then enable **Settings → Pages → Source:
+   `main` / root**. Your site builds at
+   `https://<your-username>.github.io/<your-repo>/index.html`.
 
-   ```bash
-   cd tableau-extension-starter
-   git init
-   git add .
-   git commit -m "Tableau extension starter"
-   git branch -M main
-   git remote add origin https://github.com/tableauops/tableau-extension-starter.git
-   git push -u origin main
-   ```
+2. Open **`manifest.hosted.trex`** and replace the placeholder `<url>` with that
+   address.
 
-2. In the repo: **Settings → Pages → Source: `main` / root**. After it builds, the
-   page is live at
-   `https://tableauops.github.io/tableau-extension-starter/index.html`
-   — which is exactly the URL already set in **`manifest.hosted.trex`**.
+3. In Tableau, add the extension using **`manifest.hosted.trex`** (not the local
+   one).
 
-3. In Tableau, add the extension using **`manifest.hosted.trex`** (not the local one).
-
-> Used a different repo name? Change that one segment in the `<url>` of
-> `manifest.hosted.trex` to match. Everything else stays the same.
-
-**Two manifests, on purpose:** use `manifest.trex` (localhost) for the live build
-when you're iterating with Claude Code, and `manifest.hosted.trex` (GitHub Pages)
-for the finished version you hand to attendees.
+**Two manifests, on purpose:** use `manifest.trex` (localhost) while you iterate,
+and `manifest.hosted.trex` (Pages) for the finished version you hand out.
 
 ---
 
-## Project structure
+## Project layout
 
 ```
-tableau-extension-starter/
-├── index.html                 # the panel markup
-├── manifest.trex              # LOCAL — load this for the live build
-├── manifest.hosted.trex       # HOSTED — load this once it's on GitHub Pages
+.
+├── index.html                 # the #viz host + load order
+├── manifest.trex              # LOCAL — worksheet-extension, localhost URL, encodings
+├── manifest.hosted.trex       # HOSTED — same, with your Pages URL
 ├── lib/
 │   └── tableau.extensions.1.latest.js   # official Extensions API (vendored)
 ├── src/
-│   ├── extension.js           # init + features + WORKSHOP ZONE
-│   └── style.css              # panel styling
+│   ├── viz.js                 # connect → encodings → data → BUILD ZONE (render)
+│   └── style.css              # neutral placeholder styling
 ├── README.md
-└── CLAUDE.md                  # prompts for building live with Claude Code
+└── CLAUDE.md                  # prompts for building your viz live with Claude Code
 ```
 
 ---
 
 ## Make it yours
 
-- In `manifest.trex`, set the `author` fields and the `<name>` resource.
-- In `src/extension.js`, the **WORKSHOP ZONE** comment marks where to build.
+- **Encodings** — in `manifest.trex`, the `<encoding>` tiles are what users drop
+  fields onto. Rename `Dimension` / `Measure`, add more, or remove one to fit
+  your chart, then read them in `src/viz.js` (`getEncodedFields`).
+- **The chart** — replace the `render(model)` function inside the **BUILD ZONE**
+  in `src/viz.js`. `model` hands you the worksheet name, which field is on each
+  encoding, the columns, and the rows.
+- **Identity** — set the `author`, `<name>`, `id`, and `description` in both
+  manifests.
 - See **CLAUDE.md** for copy-paste prompts that turn the build zone into a real
-  feature (CSV export, range filter, persistent notes, and more).
+  chart.
 
 ## Troubleshooting
 
 | Symptom | Fix |
 |---|---|
-| Panel blank / `init failed` | Local server not running, or `<url>` ≠ serve address. |
-| "Extension not allowed" | Enable extensions: Help → Settings and Performance → Manage Extensions (Desktop), or have your admin allow it on Server/Cloud. |
-| Works locally, not when published | You're still pointing at `localhost`. Host over HTTPS and update `<url>`. |
-| A filter won't clear | Some filter types can't be cleared by the API; it's skipped and logged. |
+| Manifest greyed out / won't add | Tableau is older than **2024.2** (Viz Extensions don't exist), or extensions are disabled by policy. |
+| Not in the mark-type dropdown | You're on a dashboard, not a worksheet. Viz extensions attach to a **worksheet's Marks card**. |
+| Blank viz area | No fields on the **Dimension/Measure** tiles yet — drop some. |
+| `Could not initialize` / nothing | Local server not running, or the `<url>` ≠ the address you're serving from. |
+| Edits not showing | Reload: mark-type dropdown → the extension's menu → **Reload**. |
+| Works locally, not when published | You're still pointing at `localhost`. Host over HTTPS and update the `<url>`. |

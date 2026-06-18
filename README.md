@@ -1,5 +1,7 @@
 # Tableau Viz Extension — Starter
 
+> 🚀 **New here? Start with [SETUP.md](SETUP.md)** — the 5-minute quick-start.
+
 A **working, minimal** Tableau *Viz Extension* — a custom chart **type** that
 renders inside a worksheet — that you customize live (great with Claude Code). It
 ships connected and functional so a build never starts from a blank folder.

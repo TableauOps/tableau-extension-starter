@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<manifest manifest-version='0.1' xmlns='http://www.tableau.com/xml/extension_manifest'>
+  <worksheet-extension id='com.vizyourdata.radialbarchart' extension-version='1.0.0'>
+    <default-locale>en_US</default-locale>
+    <name resource-id='name'/>
+    <description>Radial Bar Chart — bars arranged around a circle, fully customizable from a configuration dialog. Drop a dimension on Category and a measure on Value.</description>
+    <author name='vizyourdata'
+            email='eric.summers@vizyourdata.com'
+            organization='vizyourdata'
+            website='https://tableauops.com'/>
+    <min-api-version>1.12</min-api-version>
+    <source-location>
+      <!-- Tableau Desktop allows http://localhost. Tableau Cloud/Server require HTTPS. -->
+      <url>http://localhost:1111/radial/index.html</url>
+    </source-location>
+    <icon>iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QkQFg0b8MBEbAAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAA3klEQVQ4y2NgGAWjgB7g////KwaGb8b/////YYBIDsT///8DAOZlFRU=</icon>
+    <context-menu>
+      <configure-context-menu-item />
+    </context-menu>
+    <encoding id='category'>
+      <display-name>Category</display-name>
+      <data-spec>
+        <data-type>string</data-type>
+      </data-spec>
+      <role-spec>
+        <role-type>discrete-dimension</role-type>
+      </role-spec>
+      <fields max-count='1'/>
+      <encoding-icon token='letter-c' />
+      <tooltip>Dimension that defines each radial bar.</tooltip>
+    </encoding>
+    <encoding id='value'>
+      <display-name>Value</display-name>
+      <data-spec>
+        <data-type>numeric</data-type>
+      </data-spec>
+      <role-spec>
+        <role-type>continuous-measure</role-type>
+      </role-spec>
+      <fields max-count='1'/>
+      <encoding-icon token='letter-v' />
+      <tooltip>Measure that controls each bar's length (radius).</tooltip>
+    </encoding>
+    <encoding id='color'>
+      <display-name>Color</display-name>
+      <role-spec>
+        <role-type>discrete-dimension</role-type>
+        <role-type>continuous-measure</role-type>
+      </role-spec>
+      <fields max-count='1'/>
+      <tooltip>Optional field that colors the bars. A measure makes a gradient; a dimension assigns palette colors. Falls back to the color settings when empty.</tooltip>
+    </encoding>
+  </worksheet-extension>
+  <resources>
+    <resource id='name'>
+      <text locale='en_US'>Radial Bar Chart</text>
+    </resource>
+  </resources>
+</manifest>

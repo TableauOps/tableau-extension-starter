@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<manifest manifest-version='0.1' xmlns='http://www.tableau.com/xml/extension_manifest'>
+  <worksheet-extension id='com.vizyourdata.prettytable' extension-version='1.0.0'>
+    <default-locale>en_US</default-locale>
+    <name resource-id='name'/>
+    <description>Pretty Table — a clean, sticky-header HTML table of your worksheet's summary data. Drop any number of dimensions or measures on Columns; each field becomes a column, in the order you arrange them.</description>
+    <author name='vizyourdata'
+            email='eric.summers@vizyourdata.com'
+            organization='vizyourdata'
+            website='https://tableauops.com'/>
+    <min-api-version>1.12</min-api-version>
+    <source-location>
+      <!-- Tableau Desktop allows http://localhost. Tableau Cloud/Server require HTTPS. -->
+      <url>http://localhost:1111/pretty-table/pretty-table.html</url>
+    </source-location>
+    <icon>iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QkQFg0b8MBEbAAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAA3klEQVQ4y2NgGAWjgB7g////KwaGb8b/////YYBIDsT///8DAOZlFRU=</icon>
+    <context-menu>
+      <configure-context-menu-item />
+    </context-menu>
+    <encoding id='columns'>
+      <display-name>Columns</display-name>
+      <!-- No <data-spec>: every field type is welcome here. role-spec admits
+           dimensions and measures, discrete or continuous, so anything you drop
+           becomes a column. -->
+      <role-spec>
+        <role-type>discrete-dimension</role-type>
+        <role-type>continuous-dimension</role-type>
+        <role-type>discrete-measure</role-type>
+        <role-type>continuous-measure</role-type>
+      </role-spec>
+      <!-- max-count caps how many fields can drop here; each becomes a column. -->
+      <fields max-count='100'/>
+      <encoding-icon token='letter-c' />
+      <tooltip>Drop any number of fields here — each becomes a table column, in the order you arrange them.</tooltip>
+    </encoding>
+  </worksheet-extension>
+  <resources>
+    <resource id='name'>
+      <text locale='en_US'>Pretty Table</text>
+    </resource>
+  </resources>
+</manifest>

@@ -1,0 +1,19 @@
+# Dependencies (this project has none today — keeps the repo clean if any get added)
+node_modules/
+
+# Logs & runtime
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Local env / secrets — never commit these
+.env
+.env.*
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*~
+*.swp
+.idea/
+.vscode/

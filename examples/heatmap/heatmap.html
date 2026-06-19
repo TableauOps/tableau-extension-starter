@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calendar Heatmap</title>
+  <style>
+    :root {
+      --accent: #2c6e8f;            /* synced to the active palette */
+      --tile-w: 16px;              /* live-resizable grid cell size */
+      --tile-h: 16px;
+      --bar-band: 56px;            /* thickness of the marginal-bar bands */
+      --rowlabel-w: 40px;
+      --collabel-h: 16px;
+      --gap: 2px;
+      --empty: #eceef1;            /* in-range day with no data */
+      --ink: #1c2330;
+      --muted: #6b7280;
+      --line: #e6e8ec;
+      --font: 'Benton Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      --mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: var(--font); color: var(--ink); }
+
+    #viz { position: absolute; inset: 0; }
+    #chart { position: absolute; inset: 0; overflow: auto; padding: 12px; }
+
+    #empty {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 24px; color: var(--muted); font-size: 13px; line-height: 1.6;
+    }
+    #empty b { color: #374151; }
+
+    /* ---- the grid ---- */
+    .hm-wrap { display: flex; align-items: flex-start; gap: 18px; width: max-content; }
+    .hm-grid { display: grid; gap: var(--gap); align-content: start; }
+    .hm-cell {
+      width: var(--tile-w); height: var(--tile-h); border-radius: 5px; background: var(--empty);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .06);
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+      font-size: 10px; line-height: 1; transition: filter .12s ease, transform .12s ease;
+    }
+    .hm-cell.has { cursor: pointer; }
+    .hm-cell.has:hover { filter: brightness(1.12); transform: scale(1.18); position: relative; z-index: 3; }
+    .hm-cell .lbl { pointer-events: none; font-variant-numeric: tabular-nums; }
+
+    .hm-rowlabel, .hm-collabel { color: var(--muted); font-family: var(--mono); font-size: 11px; display: flex; align-items: center; }
+    .hm-rowlabel { justify-content: flex-end; padding-right: 6px; white-space: nowrap; }
+    .hm-collabel { align-items: flex-end; white-space: nowrap; }
+
+    /* gradient legend */
+    .hm-legend { display: flex; flex-direction: column; align-items: center; gap: 7px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+    .hm-legend .bar { width: 14px; border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .08); }
+
+    /* marginal sum bars */
+    .hm-topcell { display: flex; align-items: flex-end; justify-content: center; }
+    .hm-topbar { width: 64%; background: var(--accent); opacity: .85; border-radius: 1px 1px 0 0; transition: height .15s ease; }
+    .hm-sidecell { display: flex; align-items: center; }
+    .hm-sidebar { height: 64%; background: var(--accent); opacity: .85; border-radius: 0 1px 1px 0; transition: width .15s ease; }
+
+    /* ---- gear button ---- */
+    .hm-gear {
+      position: absolute; top: 10px; right: 12px; z-index: 20; width: 32px; height: 32px;
+      border-radius: 8px; border: 1px solid var(--line); background: #fff; color: var(--accent);
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      box-shadow: 0 2px 8px rgba(20,30,45,.12); transition: transform .15s ease, color .15s ease;
+    }
+    .hm-gear:hover { transform: rotate(40deg); }
+    .hm-gear svg { width: 18px; height: 18px; }
+
+    /* ---- modal ---- */
+    .hm-backdrop {
+      position: absolute; inset: 0; z-index: 25; background: rgba(17,24,39,.34);
+      opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility .2s ease;
+    }
+    .hm-backdrop.open { opacity: 1; visibility: visible; }
+    .hm-modal {
+      position: absolute; top: 50%; left: 50%; z-index: 30;
+      width: 360px; max-width: 92vw; max-height: 88vh;
+      background: #fff; border-radius: 12px; box-shadow: 0 24px 60px -20px rgba(20,30,45,.55);
+      transform: translate(-50%, -50%) scale(.96); opacity: 0; visibility: hidden;
+      transition: transform .2s ease, opacity .2s ease, visibility .2s ease;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .hm-modal.open { transform: translate(-50%, -50%) scale(1); opacity: 1; visibility: visible; }
+    .hm-modal header { padding: 14px 16px 12px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+    .hm-modal header h2 { font-size: 14px; margin: 0; font-weight: 650; }
+    .hm-modal .close { border: none; background: none; font-size: 20px; line-height: 1; color: var(--muted); cursor: pointer; padding: 0 4px; }
+    .hm-modal .body { padding: 6px 16px 18px; overflow-y: auto; }
+
+    .hm-field { margin-top: 16px; }
+    .hm-field > label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    .hm-field select { width: 100%; padding: 7px 9px; font: inherit; font-size: 13px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+    .hm-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 0; font-size: 13px; }
+    .hm-hint { font-size: 11px; color: var(--muted); margin-top: 8px; padding-left: 9px; border-left: 3px solid var(--accent); line-height: 1.5; }
+
+    /* palette swatches (gradient) */
+    .hm-pal { display: flex; flex-direction: column; gap: 6px; }
+    .hm-sw { display: flex; align-items: center; gap: 10px; border: 2px solid transparent; border-radius: 8px; padding: 4px 6px; cursor: pointer; background: #fff; }
+    .hm-sw:hover { background: #f3f5f7; }
+    .hm-sw.active { border-color: var(--accent); background: #f3f7fa; }
+    .hm-sw .grad { flex: 1; height: 16px; border-radius: 5px; border: 1px solid rgba(0,0,0,.08); }
+    .hm-sw .nm { width: 60px; font-size: 12px; }
+
+    /* segmented control */
+    .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+    .seg button { border: none; background: #fff; padding: 5px 12px; font: inherit; font-size: 12px; cursor: pointer; color: var(--muted); }
+    .seg button + button { border-left: 1px solid var(--line); }
+    .seg button.active { background: var(--accent); color: #fff; font-weight: 600; }
+
+    /* toggle switch */
+    .switch { position: relative; width: 38px; height: 22px; display: inline-block; flex: 0 0 auto; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .switch .track { position: absolute; inset: 0; background: #cbd2dc; border-radius: 22px; transition: background .15s; }
+    .switch .track::before { content: ''; position: absolute; height: 16px; width: 16px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform .15s; }
+    .switch input:checked + .track { background: var(--accent); }
+    .switch input:checked + .track::before { transform: translateX(16px); }
+
+    /* range slider — accent-tinted */
+    input[type="range"] { width: 130px; accent-color: var(--accent); }
+    .hm-num { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 56px; text-align: right; }
+
+    /* ---- tooltip ---- */
+    .hm-tip {
+      position: fixed; pointer-events: none; z-index: 50; background: rgba(17,24,39,.94);
+      color: #f9fafb; font-size: 12px; padding: 7px 10px; border-radius: 6px; white-space: nowrap;
+      opacity: 0; transition: opacity .1s ease; box-shadow: 0 4px 14px rgba(0,0,0,.25); max-width: 280px;
+    }
+    .hm-tip .t-title { font-weight: 600; margin-bottom: 3px; }
+    .hm-tip .t-row > span { opacity: .65; }
+  </style>
+</head>
+<body>
+  <div id="viz">
+    <div id="chart"></div>
+    <div id="empty">
+      Drop a date field on <b>Date</b> and a measure on <b>Value</b> on the Marks card.
+    </div>
+
+    <button class="hm-gear" id="gear" title="Settings" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
+
+    <div class="hm-backdrop" id="backdrop"></div>
+    <div class="hm-modal" id="drawer" role="dialog" aria-modal="true" aria-hidden="true">
+      <header><h2>Heatmap settings</h2><button class="close" id="drawerClose" aria-label="Close">×</button></header>
+      <div class="body" id="drawerBody"><!-- built by heatmap.js --></div>
+    </div>
+  </div>
+
+  <div class="hm-tip" id="tip"></div>
+
+  <script src="../lib/tableau.extensions.1.latest.js"></script>
+  <script src="../tableau-core.js"></script>
+  <script src="./heatmap-config.js"></script>
+  <script src="./heatmap.js"></script>
+</body>
+</html>

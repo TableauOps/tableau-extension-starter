@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Radial Bar Chart</title>
+  <style>
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Benton Sans', 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    #chart { width: 100%; height: 100%; }
+    #empty {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 24px; color: #6b7280; font-size: 13px; line-height: 1.6;
+    }
+    #empty b { color: #374151; }
+    .rbc-tip {
+      position: fixed; pointer-events: none; z-index: 10; background: rgba(17,24,39,0.94);
+      color: #f9fafb; font-size: 12px; padding: 6px 9px; border-radius: 6px; white-space: nowrap;
+      transform: translate(-50%, calc(-100% - 10px)); opacity: 0; transition: opacity .08s; box-shadow: 0 4px 14px rgba(0,0,0,.25);
+    }
+    .rbc-bar { transition: opacity .1s; cursor: default; }
+  </style>
+</head>
+<body>
+  <div id="chart"></div>
+  <div id="empty">
+    Drop a dimension on <b>Category</b> and a measure on <b>Value</b> on the Marks card.<br/>
+    Then use <b>Configure…</b> (Marks card or right-click) to customize the chart.
+  </div>
+  <div class="rbc-tip" id="tip"></div>
+
+  <script>
+    // Load-time error trap: a viz extension that throws before it can render
+    // otherwise shows a silent blank panel. Surface any error/4xx on-screen so
+    // "isn't loading" becomes a readable message instead of nothing.
+    (function () {
+      function fail(msg) {
+        var e = document.getElementById('empty');
+        if (!e) return;
+        e.style.display = 'flex';
+        e.style.color = '#b91c1c';
+        e.innerHTML = '<div><b>Radial Bar Chart failed to load.</b><br/>' +
+          String(msg).replace(/[<>]/g, '') +
+          '<br/><span style="color:#6b7280">Is the server running on http://localhost:1111 ? ' +
+          'Open right-click ▸ Inspect for details.</span></div>';
+      }
+      window.addEventListener('error', function (ev) {
+        // Script that 404'd or threw at parse/eval time.
+        if (ev && ev.target && (ev.target.tagName === 'SCRIPT' || ev.target.tagName === 'LINK')) {
+          fail('Could not load ' + (ev.target.src || ev.target.href || 'a script'));
+        } else if (ev && ev.message) {
+          fail(ev.message);
+        }
+      }, true);
+      window.addEventListener('unhandledrejection', function (ev) {
+        var r = ev && ev.reason;
+        fail((r && r.message) ? r.message : String(r));
+      });
+    })();
+  </script>
+
+  <script src="../lib/tableau.extensions.1.latest.js"></script>
+  <script src="../tableau-core.js"></script>
+  <script src="./shared.js"></script>
+  <script src="./radial-barchart.js"></script>
+</body>
+</html>

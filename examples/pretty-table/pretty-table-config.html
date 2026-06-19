@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pretty Table — Configure</title>
+  <style>
+    :root {
+      --ink: #1f2933; --muted: #6b7280; --line: #e5e7eb; --bg: #fff; --soft: #f8fafc;
+      --accent: #2c6e8f; --accent-soft: rgba(44,110,143,0.12);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font-family: 'Benton Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: var(--ink); background: var(--bg); font-size: 13px; display: flex; flex-direction: column; height: 100%;
+    }
+    header { padding: 14px 18px 10px; border-bottom: 1px solid var(--line); }
+    header h1 { margin: 0; font-size: 15px; }
+    header p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+
+    #form { flex: 1 1 auto; overflow: auto; padding: 12px 18px; }
+
+    details.group { border: 1px solid var(--line); border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+    details.group > summary {
+      cursor: pointer; padding: 10px 14px; font-weight: 600; background: var(--soft); list-style: none; user-select: none;
+    }
+    details.group > summary::-webkit-details-marker { display: none; }
+    details.group > summary::before { content: '▸ '; color: var(--muted); }
+    details.group[open] > summary::before { content: '▾ '; }
+    .group .body { padding: 12px 14px; }
+
+    .row { display: grid; grid-template-columns: 130px 1fr; gap: 10px; align-items: center; margin-bottom: 10px; }
+    .row > label { color: var(--muted); }
+    .row.wide { grid-template-columns: 1fr; }
+    input[type=text], input[type=number], select, textarea {
+      width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; font: inherit; color: var(--ink); background: var(--bg);
+    }
+    textarea { resize: vertical; min-height: 56px; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+    .inline { display: flex; gap: 8px; align-items: center; }
+    .inline > * { flex: 0 0 auto; }
+    .hint { color: var(--muted); font-size: 11px; }
+
+    /* Per-column editor */
+    .col-card { border: 1px solid var(--line); border-radius: 9px; margin-bottom: 10px; }
+    .col-head { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--soft); border-bottom: 1px solid var(--line); border-radius: 9px 9px 0 0; }
+    .col-head .name { font-weight: 600; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .col-head .type-tag { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    .col-body { padding: 10px 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 9px 12px; }
+    .col-body .full { grid-column: 1 / -1; }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field > span { font-size: 11px; color: var(--muted); }
+    .switch { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; }
+    .switch input { width: 15px; height: 15px; accent-color: var(--accent); }
+    .star-btn { border: none; background: none; cursor: pointer; font-size: 16px; color: #cbd5e1; padding: 0; }
+    .star-btn.on { color: #e0a800; }
+
+    footer { display: flex; gap: 10px; padding: 12px 18px; border-top: 1px solid var(--line); }
+    footer .grow { flex: 1 1 auto; }
+    button.btn { height: 34px; padding: 0 16px; border-radius: 7px; font: inherit; cursor: pointer; }
+    .btn.primary { border: none; background: var(--accent); color: #fff; font-weight: 600; }
+    .btn.ghost { border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+    .btn.link { border: none; background: none; color: var(--muted); text-decoration: underline; padding: 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Pretty Table settings</h1>
+    <p>Changes are saved to the workbook and apply when you click <b>Save</b>.</p>
+  </header>
+  <div id="form"><!-- built in JS --></div>
+  <footer>
+    <button class="btn link" id="reset">Reset to defaults</button>
+    <span class="grow"></span>
+    <button class="btn ghost" id="cancel">Cancel</button>
+    <button class="btn primary" id="save">Save</button>
+  </footer>
+
+  <script src="../lib/tableau.extensions.1.latest.js"></script>
+  <script src="./pretty-table-shared.js"></script>
+  <script src="./pretty-table-config.js"></script>
+</body>
+</html>

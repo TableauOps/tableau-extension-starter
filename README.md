@@ -85,8 +85,33 @@ and `manifest.hosted.trex` (Pages) for the finished version you hand out.
 │   ├── viz.js                 # connect → encodings → data → BUILD ZONE (render)
 │   └── style.css              # neutral placeholder styling
 ├── README.md
-└── CLAUDE.md                  # prompts for building your viz live with Claude Code
+├── CLAUDE.md                  # prompts for building your viz live with Claude Code
+└── examples/                  # three finished viz extensions built from this starter
 ```
+
+---
+
+## Examples — finished builds
+
+The [`examples/`](examples/) folder holds three complete viz extensions built
+live from this starter, as a reference for what a finished extension looks like:
+
+- **Radial Bar Chart** — bars around a circle, fully restyleable Configure dialog.
+- **Calendar Heatmap** — dates as a weeks × weekdays grid with marginal sum bars.
+- **Pretty Table** — sortable, searchable HTML table of the worksheet data.
+
+They're a self-contained suite with their own one-command server (all three serve
+from one origin). To run them:
+
+```bash
+cd examples
+npm start          # or: ./start.sh  (macOS/Linux) · start.bat (Windows)
+```
+
+See [`examples/QUICKSTART.md`](examples/QUICKSTART.md) to add them to a worksheet,
+and [`examples/README.md`](examples/README.md) for the full feature list. Each one
+follows the same connect → read encodings → read data → render flow as the
+**BUILD ZONE** in `src/viz.js` — so you can see the pattern scaled up.
 
 ---
 

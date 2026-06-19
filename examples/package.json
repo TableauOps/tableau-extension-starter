@@ -1,0 +1,12 @@
+{
+  "name": "viz-extension-suite",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Radial Bar Chart + Calendar Heatmap + Pretty Table — three Tableau worksheet viz extensions served from one localhost origin.",
+  "scripts": {
+    "start": "node server.js",
+    "serve": "node server.js"
+  },
+  "author": "vizyourdata <eric.summers@vizyourdata.com>",
+  "license": "UNLICENSED"
+}
